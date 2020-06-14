@@ -77,22 +77,23 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    */
   
   default_random_engine gen;
-    
+  // preparing gaussian noise
+  normal_distribution<double> dist_x(0.0, std_pos[0]);
+  normal_distribution<double> dist_y(0.0, std_pos[1]);
+  normal_distribution<double> dist_theta(0.0, std_pos[2]);
+
+  
+
   for (auto i = 0; i < num_particles; ++i){   
-
-    double x = particles[i].x;
-    double y = particles[i].y;
-    double theta = particles[i].theta; 
-    
-    // preparing gaussian noise
-    normal_distribution<double> dist_x(x, std_pos[0]);
-    normal_distribution<double> dist_y(y, std_pos[1]);
-    normal_distribution<double> dist_theta(theta, std_pos[2]);
-
     // predict using the process model and adding gaussian noise
-    particles[i].x = x + (velocity/yaw_rate)*(sin(theta+yaw_rate*delta_t)-sin(theta)) + dist_x(gen);
-    particles[i].y = y + (velocity/yaw_rate)*(cos(theta)-cos(theta+yaw_rate*delta_t)) + dist_y(gen);
-    particles[i].theta = theta + yaw_rate*delta_t + dist_theta(gen);
+    if (fabs(yaw_rate) < 0.000001) {
+    	particles[i].x = particles[i].x + velocity * delta_t * cos(particles[i].theta) + dist_x(gen);
+    	particles[i].y = particles[i].y + velocity * delta_t * sin(particles[i].theta) + dist_y(gen);
+    } else {
+	particles[i].x = particles[i].x + (velocity/yaw_rate)*(sin(particles[i].theta+yaw_rate*delta_t)-sin(particles[i].theta)) + dist_x(gen);
+	particles[i].y = particles[i].y + (velocity/yaw_rate)*(cos(particles[i].theta)-cos(particles[i].theta+yaw_rate*delta_t)) + dist_y(gen);
+	    particles[i].theta = particles[i].theta + yaw_rate*delta_t + dist_theta(gen);
+    }
   }
   
 }
